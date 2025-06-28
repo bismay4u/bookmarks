@@ -6,6 +6,10 @@ After the shutdown of Pocket, I found myself looking for an alternative that all
 
 ---
 
+![My Bookmarks Screenshot](./screenshot.png)
+
+---
+
 ## 🚀 Features
 
 * Easy to deploy and self-host
