@@ -1,6 +1,6 @@
 # 📚 My Bookmarks
 
-**My Bookmarks** is a self-hosted, scalable bookmarking software designed for public access and powered by MySQL. It provides a clean, organized, and extensible way to store and manage your bookmarks beyond the limitations of browser-based solutions.
+**My Bookmarks** is a self-hosted, scalable bookmarking software designed for public access and powered by MySQL. It provides a clean, organized, and extensible way to store and manage your bookmarks as browser-based solutions.
 
 After the shutdown of Pocket, I found myself looking for an alternative that allowed not just storing links, but organizing them in a meaningful way. That inspired the creation of this open-source project, so that others in a similar situation can also benefit from it.
 
