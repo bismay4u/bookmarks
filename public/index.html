@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookmarks</title>
+
+    <link rel="apple-touch-icon" sizes="57x57" href="favicons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="favicons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="favicons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="favicons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="favicons/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="favicons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="favicons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="favicons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="favicons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+    <link rel="manifest" href="favicons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="favicons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-bookmark text-primary me-2"></i>
+                <h4>My Bookmarks</h4>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="All">
+                    <i class="fas fa-star"></i>
+                    All Bookmarks
+                    <span class="nav-badge" id="all-count">0</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link active" data-category="Unread">
+                    <i class="fas fa-eye-slash"></i>
+                    Unread
+                    <span class="nav-badge" id="unread-count">0</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="Archive">
+                    <i class="fas fa-archive"></i>
+                    Archive
+                    <span class="nav-badge" id="archive-count">0</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="Favorites">
+                    <i class="fas fa-heart"></i>
+                    Favorites
+                    <span class="nav-badge" id="favorites-count">0</span>
+                </a>
+            </div>
+            
+            <hr class="my-3 mx-3">
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="Articles">
+                    <i class="fas fa-file-text"></i>
+                    Articles
+                    <span class="nav-badge" id="articles-count">0</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="Videos">
+                    <i class="fas fa-play-circle"></i>
+                    Videos
+                    <span class="nav-badge" id="videos-count">0</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-category="Pictures">
+                    <i class="fas fa-image"></i>
+                    Pictures
+                    <span class="nav-badge" id="pictures-count">0</span>
+                </a>
+            </div>
+        </nav>
+        <div class='footer-stats'>
+            <div id='footer-stats-badge' class="badge text-bg-warning">
+                <span id='meta_unprocessed'></span> / <span id='meta_processed'></span> = <span id='meta_percentage'></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="d-flex align-items-center">
+                <button class="btn d-md-none me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 class="mb-0" id="pageTitle">Unread</h2>
+            </div>
+            
+            <div class="search-bar">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search bookmarks..." id="searchInput">
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid" title="Grid View">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="view-btn" data-view="list" title="List View">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+                
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter"></i> Filters
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-sort="newest">Newest First</a></li>
+                        <li><a class="dropdown-item" href="#" data-sort="oldest">Oldest First</a></li>
+                        <li><a class="dropdown-item" href="#" data-sort="title">Title A-Z</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" data-filter="favorites">Favorites Only</a></li>
+                        <li><a class="dropdown-item" href="#" data-filter="unread">Unread Only</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading d-none" id="loadingState">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading bookmarks...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state d-none" id="emptyState">
+            <i class="fas fa-bookmark"></i>
+            <h3>No bookmarks found</h3>
+            <p>Start by adding your first bookmark!</p>
+            <button class="btn btn-primary" onclick="showAddBookmarkModal()"><br>
+                <i class="fas fa-plus me-2"></i><div>Add Bookmark</div><br>
+            </button>
+        </div>
+
+        <!-- Bookmarks Grid -->
+        <div class="bookmark-grid" id="bookmarksContainer">
+            <!-- Bookmarks will be loaded here -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper d-none" id="paginationWrapper">
+            <nav>
+                <ul class="pagination" id="pagination">
+                    <!-- Pagination will be generated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Add Bookmark Button -->
+    <button class="add-bookmark-btn" onclick="showAddBookmarkModal()" title="Add Bookmark">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Add/Edit Bookmark Modal -->
+    <div class="modal fade" id="bookmarkModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add New Bookmark</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bookmarkForm">
+                        <input type="hidden" id="bookmarkId">
+                        
+                        <div class="mb-3">
+                            <label for="bookmarkUrl" class="form-label">URL *</label>
+                            <input type="url" class="form-control" id="bookmarkUrl" required 
+                                   placeholder="https://example.com">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bookmarkTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="bookmarkTitle" 
+                                   placeholder="Will be auto-filled from URL">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bookmarkDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="bookmarkDescription" rows="3" 
+                                     placeholder="Optional description"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bookmarkCategory" class="form-label">Category</label>
+                            <select class="form-select" id="bookmarkCategory">
+                                <option value="">Select category...</option>
+                                <option value="5">Articles</option>
+                                <option value="6">Videos</option>
+                                <option value="7">Pictures</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bookmarkTags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="bookmarkTags" 
+                                   placeholder="Enter tags separated by commas">
+                            <div class="form-text">Separate multiple tags with commas</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="bookmarkFavorite">
+                                    <label class="form-check-label" for="bookmarkFavorite">
+                                        <i class="fas fa-heart text-danger me-1"></i>Mark as favorite
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="bookmarkRead">
+                                    <label class="form-check-label" for="bookmarkRead">
+                                        <i class="fas fa-eye text-success me-1"></i>Mark as read
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBookmark()">
+                        <i class="fas fa-save me-2"></i>Save Bookmark
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let currentCategory = 'Unread';
+        let currentPage = 1;
+        let currentSearch = '';
+        let currentView = 'grid';
+        let bookmarks = [];
+        let categories = [];
+        let stats = {};
+        let author = "";
+
+        // API Base URL
+        const API_BASE = '/bookmarks/api';
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        async function initializeApp() {
+            try {
+                if(localStorage.getItem("AUTHOR")==null) {
+                    var ans = prompt("What is your AUTHOR Name (no space allowed)")
+                    localStorage.setItem("AUTHOR", sanitizeString(ans));
+                }
+                author = localStorage.getItem("AUTHOR");
+                if(author==null) author = "guest";
+
+                await loadStats();
+                await loadBookmarks();
+                updateCategoryBadges();
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                showToast('Failed to load data', 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                
+                // Check if sidebar is open and click is outside sidebar and toggle button
+                if (sidebar.classList.contains('show') && 
+                    !sidebar.contains(e.target) && 
+                    !sidebarToggle.contains(e.target)) {
+                    sidebar.classList.remove('show');
+                }
+            });
+
+            // Also close sidebar when clicking on nav links in mobile
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+                    // Only close on mobile (when sidebar has 'show' class)
+                    if (sidebar.classList.contains('show')) {
+                        sidebar.classList.remove('show');
+                    }
+                });
+            });
+
+            // Prevent sidebar from closing when clicking inside it
+            document.getElementById('sidebar').addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Sidebar navigation
+            document.querySelectorAll('[data-category]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const category = this.dataset.category;
+                    selectCategory(category);
+                });
+            });
+
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    currentSearch = this.value;
+                    currentPage = 1;
+                    loadBookmarks();
+                }, 300);
+            });
+
+            // View toggle
+            document.querySelectorAll('[data-view]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    toggleView(view);
+                });
+            });
+
+            // Sidebar toggle for mobile
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('show');
+            });
+
+            // Form submission
+            document.getElementById('bookmarkForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveBookmark();
+            });
+        }
+
+        function selectCategory(category) {
+            // Update active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+
+            // Update page title
+            document.getElementById('pageTitle').textContent = 
+                category === 'All' ? 'All Bookmarks' : 
+                category === 'Unread' ? 'Unread' :
+                category + ' ';//Bookmarks
+
+            currentCategory = category;
+            currentPage = 1;
+            loadBookmarks();
+        }
+
+        function toggleView(view) {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+            
+            currentView = view;
+            renderBookmarks();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ author: author })
+                });
+                stats = await response.json();
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        function updateCategoryBadges() {
+            document.getElementById('all-count').textContent = stats.all_count || 0;
+            document.getElementById('unread-count').textContent = stats.unread_count || 0;
+            document.getElementById('archive-count').textContent = stats.archive_count || 0;
+            document.getElementById('favorites-count').textContent = stats.favorites_count || 0;
+            document.getElementById('articles-count').textContent = stats.articles_count || 0;
+            document.getElementById('videos-count').textContent = stats.videos_count || 0;
+            document.getElementById('pictures-count').textContent = stats.pictures_count || 0;
+            document.getElementById('meta_unprocessed').textContent = stats.unprocessed || 0;
+            document.getElementById('meta_processed').textContent = stats.processed || 0;
+
+            if(stats.unprocessed<10) {
+                document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-success")
+            } else if(stats.unprocessed<100) {
+                document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-warning")
+            } else {
+                document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-danger")
+            }
+
+            var percentage = Math.round((parseInt(stats.processed)/(parseInt(stats.unprocessed)+parseInt(stats.processed)))*100,0);
+            document.getElementById('meta_percentage').textContent = `${percentage} %`
+        }
+
+        async function loadBookmarks() {
+            showLoading(true);
+            
+            try {
+                const params = new URLSearchParams({
+                    category: currentCategory,
+                    page: currentPage,
+                    limit: 20
+                });
+                
+                if (currentSearch) {
+                    params.append('search', currentSearch);
+                }
+
+                const response = await fetch(`${API_BASE}/bookmarks?${params}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ author: author })
+                });
+                const data = await response.json();
+                
+                bookmarks = data.bookmarks || [];
+                renderBookmarks();
+                renderPagination(data.pagination);
+                
+            } catch (error) {
+                console.error('Failed to load bookmarks:', error);
+                showToast('Failed to load bookmarks', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            const loadingEl = document.getElementById('loadingState');
+            const containerEl = document.getElementById('bookmarksContainer');
+            const paginationEl = document.getElementById('paginationWrapper');
+            
+            if (show) {
+                loadingEl.classList.remove('d-none');
+                containerEl.innerHTML = '';
+                paginationEl.classList.add('d-none');
+            } else {
+                loadingEl.classList.add('d-none');
+            }
+        }
+
+        function renderBookmarks() {
+            const container = document.getElementById('bookmarksContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (bookmarks.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                return;
+            }
+            
+            emptyState.classList.add('d-none');
+            
+            if (currentView === 'grid') {
+                container.className = 'bookmark-grid';
+                container.innerHTML = bookmarks.map(bookmark => createBookmarkCard(bookmark)).join('');
+            } else {
+                container.className = 'bookmark-list p-4';
+                container.innerHTML = bookmarks.map(bookmark => createBookmarkListItem(bookmark)).join('');
+            }
+        }
+
+        function createBookmarkCard(bookmark) {
+            try {
+                const domain = new URL(bookmark.url).hostname;
+                const createdDate = new Date(bookmark.created_at).toLocaleDateString();
+                const tags = bookmark.tags ? bookmark.tags.split(",") : [];
+                const readClass = bookmark.is_read ? '' : 'unread';
+                
+                return `
+                    <div class="bookmark-card ${readClass}" data-id="${bookmark.id}">
+                        <div class="read-indicator"></div>
+                        <div class="bookmark-image ${bookmark.image_url ? '' : 'no-image'}">
+                            ${bookmark.image_url ? 
+                                `<img src="${bookmark.image_url}" alt="${bookmark.title}" onerror="this.parentElement.classList.add('no-image'); this.style.display='none';">` :
+                                `<i class="fas fa-bookmark"></i>`
+                            }
+                            <div class="bookmark-actions">
+                                <button class="action-btn ${bookmark.is_favorite ? 'active' : ''}" 
+                                        onclick="toggleFavorite(${bookmark.id}, ${!bookmark.is_favorite})" 
+                                        title="Toggle Favorite">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <button class="action-btn ${bookmark.is_read ? 'active' : ''}" 
+                                        onclick="toggleRead(${bookmark.id}, ${!bookmark.is_read})" 
+                                        title="Toggle Read">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn" 
+                                        onclick="editBookmark(${bookmark.id})" 
+                                        title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn" 
+                                        onclick="deleteBookmark(${bookmark.id})" 
+                                        title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bookmark-content" onclick="openBookmark('${bookmark.url}')">
+                            <div class="bookmark-header">
+                                <img src="${bookmark.favicon_url}" alt="Favicon" class="favicon" 
+                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><circle cx=%2212%22 cy=%2212%22 r=%2210%22 fill=%22%23ccc%22/></svg>'">
+                                <h3 class="bookmark-title">${bookmark.title}</h3>
+                            </div>
+                            ${bookmark.description ? `<p class="bookmark-description">${bookmark.description}</p>` : ''}
+                            ${tags.length > 0 ? `
+                                <div class="bookmark-tags">
+                                    ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                            <div class="bookmark-footer">
+                                <a href="${bookmark.url}" class="bookmark-url" target="_blank" onclick="event.stopPropagation()">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    ${domain}
+                                </a>
+                                <span class="bookmark-date">${createdDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                return "";
+            }
+        }
+
+        function createBookmarkListItem(bookmark) {
+            const domain = new URL(bookmark.url).hostname;
+            const createdDate = new Date(bookmark.created_at).toLocaleDateString();
+            const tags = bookmark.tags ? JSON.parse(bookmark.tags) : [];
+            
+            return `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <img src="${bookmark.favicon_url}" alt="Favicon" class="favicon me-3" 
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><circle cx=%2212%22 cy=%2212%22 r=%2210%22 fill=%22%23ccc%22/></svg>'">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-2">
+                                    <a href="${bookmark.url}" target="_blank" class="text-decoration-none">${bookmark.title}</a>
+                                </h5>
+                                ${bookmark.description ? `<p class="card-text text-muted">${bookmark.description}</p>` : ''}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">${domain} • ${createdDate}</small>
+                                        ${tags.length > 0 ? `
+                                            <div class="mt-2">
+                                                ${tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm ${bookmark.is_favorite ? 'btn-warning' : 'btn-outline-warning'}" 
+                                                onclick="toggleFavorite(${bookmark.id}, ${!bookmark.is_favorite})">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                        <button class="btn btn-sm ${bookmark.is_read ? 'btn-success' : 'btn-outline-success'}" 
+                                                onclick="toggleRead(${bookmark.id}, ${!bookmark.is_read})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editBookmark(${bookmark.id})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteBookmark(${bookmark.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPagination(pagination) {
+            const wrapper = document.getElementById('paginationWrapper');
+            const container = document.getElementById('pagination');
+            
+            if (!pagination || pagination.pages <= 1) {
+                wrapper.classList.add('d-none');
+                return;
+            }
+            
+            wrapper.classList.remove('d-none');
+            
+            let html = '';
+            
+            // Previous button
+            html += `
+                <li class="page-item ${pagination.page === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${pagination.page - 1})">Previous</a>
+                </li>
+            `;
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.pages, pagination.page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === pagination.page ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Next button
+            html += `
+                <li class="page-item ${pagination.page === pagination.pages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${pagination.page + 1})">Next</a>
+                </li>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function sanitizeString(input) {
+            // Replace all non-alphanumeric characters with _
+            let result = input.replace(/[^a-zA-Z0-9]/g, '_');
+            
+            // Replace multiple consecutive underscores with a single underscore
+            result = result.replace(/_+/g, '_');
+            
+            // (Optional) Trim leading and trailing underscores
+            result = result.replace(/^_+|_+$/g, '');
+
+            return result;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadBookmarks();
+        }
+
+        function openBookmark(url) {
+            window.open(url, '_blank');
+        }
+
+        async function toggleFavorite(id, favorite) {
+            try {
+                const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_favorite: favorite })
+                });
+                
+                if (response.ok) {
+                    await loadBookmarks();
+                    await loadStats();
+                    updateCategoryBadges();
+                    showToast(favorite ? 'Added to favorites' : 'Removed from favorites', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to toggle favorite:', error);
+                showToast('Failed to update bookmark', 'error');
+            }
+        }
+
+        async function toggleRead(id, read) {
+            try {
+                const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_read: read })
+                });
+                
+                if (response.ok) {
+                    await loadBookmarks();
+                    await loadStats();
+                    updateCategoryBadges();
+                    showToast(read ? 'Marked as read' : 'Marked as unread', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to toggle read status:', error);
+                showToast('Failed to update bookmark', 'error');
+            }
+        }
+
+        async function deleteBookmark(id) {
+            if (!confirm('Are you sure you want to delete this bookmark?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    await loadBookmarks();
+                    await loadStats();
+                    updateCategoryBadges();
+                    showToast('Bookmark deleted successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to delete bookmark:', error);
+                showToast('Failed to delete bookmark', 'error');
+            }
+        }
+
+        function showAddBookmarkModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Bookmark';
+            document.getElementById('bookmarkForm').reset();
+            document.getElementById('bookmarkId').value = '';
+            new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
+        }
+
+        function editBookmark(id) {
+            const bookmark = bookmarks.find(b => b.id === id);
+            if (!bookmark) return;
+            
+            document.getElementById('modalTitle').textContent = 'Edit Bookmark';
+            document.getElementById('bookmarkId').value = bookmark.id;
+            document.getElementById('bookmarkUrl').value = bookmark.url;
+            document.getElementById('bookmarkTitle').value = bookmark.title;
+            document.getElementById('bookmarkDescription').value = bookmark.description || '';
+            document.getElementById('bookmarkCategory').value = bookmark.category_id || '';
+            document.getElementById('bookmarkTags').value = bookmark.tags ? bookmark.tags : '';
+            document.getElementById('bookmarkFavorite').checked = bookmark.is_favorite;
+            document.getElementById('bookmarkRead').checked = bookmark.is_read;
+            
+            new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
+        }
+
+        async function saveBookmark() {
+            const form = document.getElementById('bookmarkForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const id = document.getElementById('bookmarkId').value;
+            const url = document.getElementById('bookmarkUrl').value;
+            const title = document.getElementById('bookmarkTitle').value;
+            const description = document.getElementById('bookmarkDescription').value;
+            const category_id = document.getElementById('bookmarkCategory').value || null;
+            const tags = document.getElementById('bookmarkTags').value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag.length > 0)
+                .join(",");
+            const is_favorite = document.getElementById('bookmarkFavorite').checked;
+            const is_read = document.getElementById('bookmarkRead').checked;
+            
+            const data = {
+                url,
+                category_id,
+                tags,
+                is_favorite,
+                is_read,
+                author
+            };
+            
+            if (title) data.title = title;
+            if (description) data.description = description;
+            
+            try {
+                const response = await fetch(
+                    id ? `${API_BASE}/bookmarks/${id}` : `${API_BASE}/bookmarks/create`,
+                    {
+                        method: id ? 'PUT' : 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    }
+                );
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('bookmarkModal')).hide();
+                    await loadBookmarks();
+                    await loadStats();
+                    updateCategoryBadges();
+                    showToast(id ? 'Bookmark updated successfully' : 'Bookmark added successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Failed to save bookmark', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to save bookmark:', error);
+                showToast('Failed to save bookmark', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const bgClass = type === 'success' ? 'bg-success' : 
+                           type === 'error' ? 'bg-danger' : 
+                           type === 'warning' ? 'bg-warning' : 'bg-info';
+            
+            const toastHtml = `
+                <div class="toast ${bgClass} text-white" id="${toastId}" role="alert">
+                    <div class="toast-body d-flex justify-content-between align-items-center">
+                        <span>${message}</span>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+    </script>
+</body>
+</html>
