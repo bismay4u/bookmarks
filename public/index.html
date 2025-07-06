@@ -750,6 +750,9 @@
             document.getElementById('modalTitle').textContent = 'Add New Bookmark';
             document.getElementById('bookmarkForm').reset();
             document.getElementById('bookmarkId').value = '';
+            
+            document.getElementById('bookmarkUrl').disabled = false;
+
             new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
         }
 
@@ -766,6 +769,8 @@
             document.getElementById('bookmarkTags').value = bookmark.tags ? bookmark.tags : '';
             document.getElementById('bookmarkFavorite').checked = bookmark.is_favorite;
             document.getElementById('bookmarkRead').checked = bookmark.is_read;
+
+            document.getElementById('bookmarkUrl').disabled = true;
             
             new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
         }

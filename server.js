@@ -39,7 +39,8 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 app.use(function(req, res, next) {
-  //console.log("REQUEST_URL", req.method, req.url, req.headers, req.body, req.query, req.params);
+  console.log("REQUEST_URL", req.method, req.url, req.headers, req.body, req.query, req.params);
+
   const REQ_URI = req.url.split("?")[0];
   const MY_IP = req.headers['x-forwarded-for']?req.headers['x-forwarded-for']:(req.headers['x-real-ip']?req.headers['x-real-ip']:"-");
   
@@ -133,6 +134,7 @@ async function createTables() {
       is_read BOOLEAN DEFAULT FALSE,
       is_favorite BOOLEAN DEFAULT FALSE,
       is_archived BOOLEAN DEFAULT FALSE,
+      is_processed BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
@@ -409,6 +411,21 @@ app.put('/api/bookmarks/:id', async (req, res) => {
     );
     
     res.json(bookmark[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Mark bookmark for reprocessing
+app.post('/api/bookmarks/reprocess/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await pool.execute(
+      `UPDATE bookmarks SET is_processed=false, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [id]
+    );
+    res.json({ message: 'Bookmark deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
