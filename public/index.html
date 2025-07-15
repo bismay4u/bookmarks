@@ -463,16 +463,26 @@
         }
 
         function updateCategoryBadges() {
-            document.getElementById('all-count').textContent = stats.all_count || 0;
-            document.getElementById('unread-count').textContent = stats.unread_count || 0;
-            document.getElementById('archive-count').textContent = stats.archive_count || 0;
-            document.getElementById('favorites-count').textContent = stats.favorites_count || 0;
-            document.getElementById('articles-count').textContent = stats.articles_count || 0;
-            document.getElementById('gitrepo-count').textContent = stats.gitrepo_count || 0;
-            document.getElementById('videos-count').textContent = stats.videos_count || 0;
-            document.getElementById('pictures-count').textContent = stats.pictures_count || 0;
-            document.getElementById('meta_unprocessed').textContent = stats.unprocessed || 0;
-            document.getElementById('meta_processed').textContent = stats.processed || 0;
+            Object.keys(stats).forEach(k=> {
+                if(document.getElementById(k)!=null) {
+                    document.getElementById(k).textContent = stats[k];
+                } else if(document.getElementById(k.replace(/_/g, "-"))!=null) {
+                    document.getElementById(k.replace(/_/g, "-")).textContent = stats[k];
+                } else {
+                    console.log("STAT_NOT_SUPPORTED", k, stats[k]);
+                }
+            })
+
+            // document.getElementById('all-count').textContent = stats.all_count || 0;
+            // document.getElementById('unread-count').textContent = stats.unread_count || 0;
+            // document.getElementById('archive-count').textContent = stats.archive_count || 0;
+            // document.getElementById('favorites-count').textContent = stats.favorites_count || 0;
+            // document.getElementById('articles-count').textContent = stats.articles_count || 0;
+            // document.getElementById('gitrepo-count').textContent = stats.gitrepo_count || 0;
+            // document.getElementById('videos-count').textContent = stats.videos_count || 0;
+            // document.getElementById('pictures-count').textContent = stats.pictures_count || 0;
+            // document.getElementById('meta_unprocessed').textContent = stats.unprocessed || 0;
+            // document.getElementById('meta_processed').textContent = stats.processed || 0;
 
             if(stats.unprocessed<10) {
                 document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-success")

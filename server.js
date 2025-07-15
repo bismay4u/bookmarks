@@ -173,19 +173,19 @@ async function createTables() {
     
     // Insert default categories
     const defaultCategories = [
-      ['All', 'list', '#6c757d'],
-      ['Unread', 'eye-slash', '#007bff'],
-      ['Archive', 'archive', '#6c757d'],
-      ['Favorites', 'heart', '#dc3545'],
-      ['Articles', 'file-text', '#28a745'],
-      ['Videos', 'play-circle', '#fd7e14'],
-      ['Pictures', 'image', '#e83e8c']
+      ['All', 'list', '#6c757d','false'],
+      ['Unread', 'eye-slash', '#007bff','false'],
+      ['Archive', 'archive', '#6c757d','false'],
+      ['Favorites', 'heart', '#dc3545','false'],
+      ['Articles', 'file-text', '#28a745','true'],
+      ['Videos', 'play-circle', '#fd7e14','true'],
+      ['Pictures', 'image', '#e83e8c','true']
     ];
 
-    for (const [name, icon, color] of defaultCategories) {
+    for (const [name, icon, color, in_listview] of defaultCategories) {
       await pool.execute(
-        'INSERT IGNORE INTO categories (name, icon, color) VALUES (?, ?, ?)',
-        [name, icon, color]
+        'INSERT IGNORE INTO categories (name, icon, color,in_listview) VALUES (?, ?, ?,?)',
+        [name, icon, color,in_listview]
       );
     }
     
@@ -499,8 +499,8 @@ app.post('/api/stats', async (req, res) => {
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_read = FALSE AND is_archived = FALSE) as unread_count,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_archived = TRUE) as archive_count,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_favorite = TRUE AND is_archived = FALSE) as favorites_count,
-        (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=0) as unprocessed,
-        (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=1) as processed
+        (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=0) as meta_unprocessed,
+        (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=1) as meta_processed
     `);
 
     const [stats1] = await pool.execute(`
