@@ -17,6 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const IP_WHITELIST = process.env.IP_WHITELIST.split(",") || [];
 const AUTH_TOKENS = process.env.API_AUTHTOKEN.split(",") || [];
+global.CATEGORY_MASTERS = [];
 
 app.set('trust proxy', 1); /* number of proxies between user and server */
 
@@ -104,6 +105,24 @@ async function initDatabase() {
     
     // Create tables if they don't exist
     await createTables();
+
+    const [rows] = await pool.execute('SELECT * FROM categories WHERE in_listview="true" AND blocked="false" ORDER BY name');
+
+    CATEGORY_MASTERS = [];
+
+    rows.forEach(function(row, k) {
+      if(row.rules == null) row.rules = "{}";
+
+      try {
+        row.rules = JSON.parse(row.rules);
+      } catch(e) {
+        row.rules = {};
+      }
+
+      CATEGORY_MASTERS.push(row);
+    });
+
+    // console.log(CATEGORY_MASTERS);
   } catch (error) {
     console.error('Database connection failed:', error);
     process.exit(1);
@@ -117,6 +136,9 @@ async function createTables() {
       name VARCHAR(255) NOT NULL UNIQUE,
       icon VARCHAR(100) DEFAULT 'folder',
       color VARCHAR(7) DEFAULT '#007bff',
+      rules text NULL,
+      in_listview varchar(7) NOT NULL DEFAULT 'false',
+      blocked varchar(7) NOT NULL DEFAULT 'false',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
@@ -239,8 +261,30 @@ app.post('/api/categories', async (req, res) => {
   try {
     const { author } = req.body;
 
-    const [rows] = await pool.execute('SELECT * FROM categories ORDER BY name');
-    res.json(rows);
+    const [rows] = await pool.execute('SELECT * FROM categories WHERE in_listview="true" AND blocked="false" ORDER BY name');
+
+    CATEGORY_MASTERS = [];
+
+    rows.forEach(function(row, k) {
+      if(row.rules == null) row.rules = "{}";
+
+      try {
+        row.rules = JSON.parse(row.rules);
+      } catch(e) {
+        row.rules = {};
+      }
+
+      CATEGORY_MASTERS.push(row);
+    });
+
+    res.json(rows.map(a=>{
+        var newObj = {};
+        newObj.name = a.name;
+        newObj.icon = a.icon;
+        newObj.color = a.color;
+
+        return newObj;
+    }));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -425,7 +469,7 @@ app.post('/api/bookmarks/reprocess/:id', async (req, res) => {
       `UPDATE bookmarks SET is_processed=false, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [id]
     );
-    res.json({ message: 'Bookmark deleted successfully' });
+    res.json({ message: 'Bookmark marked successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -455,13 +499,19 @@ app.post('/api/stats', async (req, res) => {
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_read = FALSE AND is_archived = FALSE) as unread_count,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_archived = TRUE) as archive_count,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_favorite = TRUE AND is_archived = FALSE) as favorites_count,
-        (SELECT COUNT(*) FROM bookmarks b JOIN categories c ON b.category_id = c.id WHERE c.name = 'Articles' AND b.blocked="false" AND b.is_archived = FALSE AND b.author='${author}') as articles_count,
-        (SELECT COUNT(*) FROM bookmarks b JOIN categories c ON b.category_id = c.id WHERE c.name = 'Videos' AND b.blocked="false" AND b.is_archived = FALSE AND b.author='${author}') as videos_count,
-        (SELECT COUNT(*) FROM bookmarks b JOIN categories c ON b.category_id = c.id WHERE c.name = 'Pictures' AND b.blocked="false" AND b.is_archived = FALSE AND b.author='${author}') as pictures_count,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=0) as unprocessed,
         (SELECT COUNT(*) FROM bookmarks WHERE blocked="false" AND author='${author}' AND is_processed=1) as processed
     `);
-    
+
+    const [stats1] = await pool.execute(`
+        SELECT name, (SELECT COUNT(*) FROM bookmarks WHERE category_id=categories.id AND author='${author}') as count FROM categories 
+          WHERE categories.in_listview="true" AND categories.blocked="false" GROUP BY categories.id
+      `);
+
+    stats1.forEach(function(row, k) {
+      stats[0][`${row.name.toLowerCase()}_count`] = row.count;
+    });
+
     res.json(stats[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -531,7 +581,7 @@ app.get('/cron', async (req, res) => {
 
 // Add URL via various remote methods
 app.get('/addURL', async (req, res) => {
-  console.log("ADD_URL", req.query);
+  console.log("ADD_URL", req.query, CATEGORY_MASTERS);
 
   if(req.query.url!=null && req.query.url.length>5) {
 
@@ -544,6 +594,28 @@ app.get('/addURL', async (req, res) => {
 
     var category_id = 5;
     var tags = "";
+    const USER_URL = req.query.url;
+
+    try {
+      var categoryList = CATEGORY_MASTERS.filter(a=>{
+            if(a.rules!=null) {
+                if(a.rules.DOMAINS!=null) {
+                    if(typeof a.rules.DOMAINS == "string") a.rules.DOMAINS = a.rules.DOMAINS.split(",");
+                    var x1 = a.rules.DOMAINS.filter(b=>{
+                        return (USER_URL.indexOf(`//${b}`)>0);
+                    })
+
+                    return x1.length>0;
+                }
+                if(a.rules.REGEX!=null) {
+                    var a1 = new RegExp(a.rules.REGEX);
+                    return (USER_URL.match(a1)!=null && USER_URL.match(a1).length>0)
+                }
+            }
+            return false;
+        })
+      if(categoryList.length>0) category_id = categoryList[0].id;
+    } catch(e) {console.error(e)} 
 
     await pool.execute(
       `INSERT INTO bookmarks (title, url, description, favicon_url, image_url, category_id, author, tags)
@@ -566,7 +638,7 @@ app.get('/addURL', async (req, res) => {
 });
 
 app.post('/addURL', async (req, res) => {
-  console.log("ADD_URL", req.body);
+  console.log("ADD_URL", req.body, CATEGORY_MASTERS);
 
   if(req.body.url!=null && req.body.url.length>5) {
     
@@ -579,6 +651,29 @@ app.post('/addURL', async (req, res) => {
 
     var category_id = 5;
     var tags = "";
+
+    const USER_URL = req.query.url;
+
+    try {
+      var categoryList = CATEGORY_MASTERS.filter(a=>{
+            if(a.rules!=null) {
+                if(a.rules.DOMAINS!=null) {
+                    if(typeof a.rules.DOMAINS == "string") a.rules.DOMAINS = a.rules.DOMAINS.split(",");
+                    var x1 = a.rules.DOMAINS.filter(b=>{
+                        return (USER_URL.indexOf(`//${b}`)>0);
+                    })
+
+                    return x1.length>0;
+                }
+                if(a.rules.REGEX!=null) {
+                    var a1 = new RegExp(a.rules.REGEX);
+                    return (USER_URL.match(a1)!=null && USER_URL.match(a1).length>0)
+                }
+            }
+            return false;
+        })
+      if(categoryList.length>0) category_id = categoryList[0].id;
+    } catch(e) {console.error(e)} 
 
     await pool.execute(
       `INSERT INTO bookmarks (title, url, description, favicon_url, image_url, category_id, author, tags)

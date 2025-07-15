@@ -7,7 +7,7 @@ module.exports = {
 
     // First application
     {
-      name      : 'bkm-bookmarks',
+      name      : 'myspace-bookmarks',
       script    : 'server.js',
       //watch: true,
       watch_delay: 1000,

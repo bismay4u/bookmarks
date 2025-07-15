@@ -69,27 +69,30 @@
             
             <hr class="my-3 mx-3">
             
-            <div class="nav-item">
-                <a href="#" class="nav-link" data-category="Articles">
-                    <i class="fas fa-file-text"></i>
-                    Articles
-                    <span class="nav-badge" id="articles-count">0</span>
-                </a>
+            <div id='listOfCategories'>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-category="Articles">
+                        <i class="fas fa-file-text"></i>
+                        Articles
+                        <span class="nav-badge" id="articles-count">0</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-category="Videos">
+                        <i class="fas fa-play-circle"></i>
+                        Videos
+                        <span class="nav-badge" id="videos-count">0</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" data-category="Pictures">
+                        <i class="fas fa-image"></i>
+                        Pictures
+                        <span class="nav-badge" id="pictures-count">0</span>
+                    </a>
+                </div>
             </div>
-            <div class="nav-item">
-                <a href="#" class="nav-link" data-category="Videos">
-                    <i class="fas fa-play-circle"></i>
-                    Videos
-                    <span class="nav-badge" id="videos-count">0</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="#" class="nav-link" data-category="Pictures">
-                    <i class="fas fa-image"></i>
-                    Pictures
-                    <span class="nav-badge" id="pictures-count">0</span>
-                </a>
-            </div>
+            <div id='listOfTags'></div>
         </nav>
         <div class='footer-stats'>
             <div id='footer-stats-badge' class="badge text-bg-warning">
@@ -216,9 +219,10 @@
                             <label for="bookmarkCategory" class="form-label">Category</label>
                             <select class="form-select" id="bookmarkCategory">
                                 <option value="">Select category...</option>
-                                <option value="5">Articles</option>
+                                <!-- <option value="5">Articles</option>
+                                <option value="8">GitRepo</option>
                                 <option value="6">Videos</option>
-                                <option value="7">Pictures</option>
+                                <option value="7">Pictures</option> -->
                             </select>
                         </div>
                         
@@ -272,7 +276,12 @@
         let currentSearch = '';
         let currentView = 'grid';
         let bookmarks = [];
-        let categories = [];
+        let categories = [
+                [5, 'Articles', 'file-text', '#28a745'],
+                [6, 'Videos', 'play-circle', '#fd7e14'],
+                [7, 'Pictures', 'image', '#e83e8c'],
+                [8, 'GitRepo', 'code', '#e88c3e'],
+            ];
         let stats = {};
         let author = "";
 
@@ -283,6 +292,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             setupEventListeners();
+
+            setInterval(async function() {
+                await loadStats();
+                updateCategoryBadges();
+            },1000*60*5);
         });
 
         async function initializeApp() {
@@ -294,6 +308,7 @@
                 author = localStorage.getItem("AUTHOR");
                 if(author==null) author = "guest";
 
+                await loadCategories();
                 await loadStats();
                 await loadBookmarks();
                 updateCategoryBadges();
@@ -402,6 +417,38 @@
             renderBookmarks();
         }
 
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ author: author })
+                });
+                categories = await response.json();
+
+                document.getElementById("bookmarkCategory").innerHTML = `<option value="">Select category...</option>`+
+                        categories.map(a=>`<option value='${a.id}'>${a.name}</option>`).join('');
+
+                document.getElementById("listOfCategories").innerHTML = categories.map(a=>`<div class="nav-item">
+                    <a href="#" class="nav-link" data-category="${a.name}">
+                        <i class="fas fa-${a.icon}"></i>
+                        ${a.name}
+                        <span class="nav-badge" id="${a.name.toLowerCase()}-count">0</span>
+                    </a>
+                </div>`).join('');
+
+                document.getElementById("listOfCategories").querySelectorAll('[data-category]').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const category = this.dataset.category;
+                        selectCategory(category);
+                    });
+                });
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
         async function loadStats() {
             try {
                 const response = await fetch(`${API_BASE}/stats`, {
@@ -421,6 +468,7 @@
             document.getElementById('archive-count').textContent = stats.archive_count || 0;
             document.getElementById('favorites-count').textContent = stats.favorites_count || 0;
             document.getElementById('articles-count').textContent = stats.articles_count || 0;
+            document.getElementById('gitrepo-count').textContent = stats.gitrepo_count || 0;
             document.getElementById('videos-count').textContent = stats.videos_count || 0;
             document.getElementById('pictures-count').textContent = stats.pictures_count || 0;
             document.getElementById('meta_unprocessed').textContent = stats.unprocessed || 0;
@@ -445,7 +493,7 @@
                 const params = new URLSearchParams({
                     category: currentCategory,
                     page: currentPage,
-                    limit: 20
+                    limit: 24
                 });
                 
                 if (currentSearch) {
@@ -533,6 +581,11 @@
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 <button class="action-btn" 
+                                        onclick="reprocessBookmark(${bookmark.id})" 
+                                        title="Reprocess">
+                                    <i class="fas fa-retweet"></i>
+                                </button>
+                                <button class="action-btn" 
                                         onclick="editBookmark(${bookmark.id})" 
                                         title="Edit">
                                     <i class="fas fa-edit"></i>
@@ -604,6 +657,11 @@
                                         <button class="btn btn-sm ${bookmark.is_read ? 'btn-success' : 'btn-outline-success'}" 
                                                 onclick="toggleRead(${bookmark.id}, ${!bookmark.is_read})">
                                             <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="action-btn" 
+                                                onclick="reprocessBookmark(${bookmark.id})" 
+                                                title="Reprocess">
+                                            <i class="fas fa-retweet"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-primary" onclick="editBookmark(${bookmark.id})">
                                             <i class="fas fa-edit"></i>
@@ -756,6 +814,22 @@
             new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
         }
 
+        async function reprocessBookmark(id) {
+            const bookmark = bookmarks.find(b => b.id === id);
+            if (!bookmark) return;
+
+            await fetch(
+                    `${API_BASE}/bookmarks/reprocess/${id}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ author: author })
+                    }
+                );
+            await loadStats();
+            updateCategoryBadges();
+        }
+
         function editBookmark(id) {
             const bookmark = bookmarks.find(b => b.id === id);
             if (!bookmark) return;
@@ -770,7 +844,7 @@
             document.getElementById('bookmarkFavorite').checked = bookmark.is_favorite;
             document.getElementById('bookmarkRead').checked = bookmark.is_read;
 
-            document.getElementById('bookmarkUrl').disabled = true;
+            //document.getElementById('bookmarkUrl').disabled = true;
             
             new bootstrap.Modal(document.getElementById('bookmarkModal')).show();
         }
