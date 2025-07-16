@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, max-scale=1.0, user-scalable=0">
     <title>My Bookmarks</title>
 
     <link rel="apple-touch-icon" sizes="57x57" href="favicons/apple-icon-57x57.png">
@@ -32,7 +32,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="d-flex align-items-center">
-                <i class="fas fa-bookmark text-primary me-2"></i>
+                <i class="fas fa-bookmark text-primary me-2 appicon"></i>
                 <h4>My Bookmarks</h4>
             </div>
         </div>
@@ -104,7 +104,7 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Bar -->
-        <div class="top-bar">
+        <div class="top-bar fixed-top">
             <div class="d-flex align-items-center">
                 <button class="btn d-md-none me-3" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
@@ -135,7 +135,7 @@
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="fas fa-filter"></i> Filters
                     </button>
-                    <ul class="dropdown-menu">
+                    <ul id='filter-dropdown' class="dropdown-menu">
                         <li><a class="dropdown-item" href="#" data-sort="newest">Newest First</a></li>
                         <li><a class="dropdown-item" href="#" data-sort="oldest">Oldest First</a></li>
                         <li><a class="dropdown-item" href="#" data-sort="title">Title A-Z</a></li>
@@ -216,6 +216,12 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label for="bookmarkImageURL" class="form-label">Image URL</label>
+                            <input type="text" class="form-control" id="bookmarkImageURL" 
+                                   placeholder="Optional Image for background">
+                        </div>
+
+                        <div class="mb-3">
                             <label for="bookmarkCategory" class="form-label">Category</label>
                             <select class="form-select" id="bookmarkCategory">
                                 <option value="">Select category...</option>
@@ -284,6 +290,8 @@
             ];
         let stats = {};
         let author = "";
+        let sort = "";
+        let filter = "";
 
         // API Base URL
         const API_BASE = '/bookmarks/api';
@@ -340,6 +348,25 @@
                     if (sidebar.classList.contains('show')) {
                         sidebar.classList.remove('show');
                     }
+                });
+            });
+
+            // For Filter Dropdown
+            document.querySelectorAll('#filter-dropdown .dropdown-item').forEach(link => {
+                link.addEventListener('click', async function() {
+                    document.querySelectorAll('#filter-dropdown .dropdown-item').forEach(a=>a.classList.remove("active"))
+
+                    if(this.dataset.sort!=null) {
+                        sort = this.dataset.sort;
+                    }
+                    
+                    if(this.dataset.filter!=null) {
+                        filter = this.dataset.filter;
+                    }
+
+                    this.classList.add("active");
+
+                    await loadBookmarks();
                 });
             });
 
@@ -404,6 +431,10 @@
 
             currentCategory = category;
             currentPage = 1;
+            
+            document.querySelectorAll('#filter-dropdown .dropdown-item[data-filter]').forEach(a=>a.classList.remove("active"));
+            filter = '';
+
             loadBookmarks();
         }
 
@@ -481,18 +512,18 @@
             // document.getElementById('gitrepo-count').textContent = stats.gitrepo_count || 0;
             // document.getElementById('videos-count').textContent = stats.videos_count || 0;
             // document.getElementById('pictures-count').textContent = stats.pictures_count || 0;
-            // document.getElementById('meta_unprocessed').textContent = stats.unprocessed || 0;
-            // document.getElementById('meta_processed').textContent = stats.processed || 0;
+            // document.getElementById('meta_unprocessed').textContent = stats.meta_unprocessed || 0;
+            // document.getElementById('meta_processed').textContent = stats.meta_processed || 0;
 
-            if(stats.unprocessed<10) {
+            if(stats.meta_unprocessed<10) {
                 document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-success")
-            } else if(stats.unprocessed<100) {
+            } else if(stats.meta_unprocessed<100) {
                 document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-warning")
             } else {
                 document.getElementById("footer-stats-badge").setAttribute("class", "badge text-bg-danger")
             }
 
-            var percentage = Math.round((parseInt(stats.processed)/(parseInt(stats.unprocessed)+parseInt(stats.processed)))*100,0);
+            var percentage = Math.round((parseInt(stats.meta_processed)/(parseInt(stats.meta_unprocessed)+parseInt(stats.meta_processed)))*100,0);
             document.getElementById('meta_percentage').textContent = `${percentage} %`
         }
 
@@ -502,6 +533,8 @@
             try {
                 const params = new URLSearchParams({
                     category: currentCategory,
+                    sort: sort,
+                    filter: filter,
                     page: currentPage,
                     limit: 24
                 });
@@ -590,6 +623,11 @@
                                         title="Toggle Read">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                <button class="action-btn ${bookmark.is_archived ? 'active' : ''}" 
+                                        onclick="archiveBookmark(${bookmark.id}, ${!bookmark.is_archived})" 
+                                        title="Archive Bookmark">
+                                    <i class="fas fa-archive"></i>
+                                </button>
                                 <button class="action-btn" 
                                         onclick="reprocessBookmark(${bookmark.id})" 
                                         title="Reprocess">
@@ -651,7 +689,7 @@
                                 </h5>
                                 ${bookmark.description ? `<p class="card-text text-muted">${bookmark.description}</p>` : ''}
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div>
+                                    <div class="d-sm-none">
                                         <small class="text-muted">${domain} • ${createdDate}</small>
                                         ${tags.length > 0 ? `
                                             <div class="mt-2">
@@ -667,6 +705,11 @@
                                         <button class="btn btn-sm ${bookmark.is_read ? 'btn-success' : 'btn-outline-success'}" 
                                                 onclick="toggleRead(${bookmark.id}, ${!bookmark.is_read})">
                                             <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm ${bookmark.is_archived ? 'btn-success' : 'btn-outline-success'}" 
+                                                onclick="archiveBookmark(${bookmark.id}, ${!bookmark.is_read})" 
+                                                title="Archive Bookmark">
+                                            <i class="fas fa-archive"></i>
                                         </button>
                                         <button class="action-btn" 
                                                 onclick="reprocessBookmark(${bookmark.id})" 
@@ -757,7 +800,7 @@
                 const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_favorite: favorite })
+                    body: JSON.stringify({ author: author, is_favorite: favorite })
                 });
                 
                 if (response.ok) {
@@ -777,7 +820,7 @@
                 const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_read: read })
+                    body: JSON.stringify({ author: author, is_read: read })
                 });
                 
                 if (response.ok) {
@@ -785,6 +828,26 @@
                     await loadStats();
                     updateCategoryBadges();
                     showToast(read ? 'Marked as read' : 'Marked as unread', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to toggle read status:', error);
+                showToast('Failed to update bookmark', 'error');
+            }
+        }
+
+        async function archiveBookmark(id, archived) {
+            try {
+                const response = await fetch(`${API_BASE}/bookmarks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ author: author, is_archived: archived })
+                });
+                
+                if (response.ok) {
+                    await loadBookmarks();
+                    await loadStats();
+                    updateCategoryBadges();
+                    showToast(archived ? 'Archived Bookmark' : 'Restored Bookmark', 'success');
                 }
             } catch (error) {
                 console.error('Failed to toggle read status:', error);
@@ -849,6 +912,7 @@
             document.getElementById('bookmarkUrl').value = bookmark.url;
             document.getElementById('bookmarkTitle').value = bookmark.title;
             document.getElementById('bookmarkDescription').value = bookmark.description || '';
+            document.getElementById('bookmarkImageURL').value = bookmark.image_url || '';
             document.getElementById('bookmarkCategory').value = bookmark.category_id || '';
             document.getElementById('bookmarkTags').value = bookmark.tags ? bookmark.tags : '';
             document.getElementById('bookmarkFavorite').checked = bookmark.is_favorite;
@@ -870,6 +934,7 @@
             const url = document.getElementById('bookmarkUrl').value;
             const title = document.getElementById('bookmarkTitle').value;
             const description = document.getElementById('bookmarkDescription').value;
+            const image_url = document.getElementById('bookmarkImageURL').value;
             const category_id = document.getElementById('bookmarkCategory').value || null;
             const tags = document.getElementById('bookmarkTags').value
                 .split(',')
@@ -890,6 +955,7 @@
             
             if (title) data.title = title;
             if (description) data.description = description;
+            if (image_url) data.image_url = image_url;
             
             try {
                 const response = await fetch(

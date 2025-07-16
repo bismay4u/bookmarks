@@ -216,6 +216,7 @@ async function fetchUrlMetadata(url) {
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        // 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
       }
     });
     
@@ -279,6 +280,8 @@ app.post('/api/categories', async (req, res) => {
 
     res.json(rows.map(a=>{
         var newObj = {};
+
+        newObj.id = a.id;
         newObj.name = a.name;
         newObj.icon = a.icon;
         newObj.color = a.color;
@@ -293,7 +296,7 @@ app.post('/api/categories', async (req, res) => {
 // Get bookmarks with filters
 app.post('/api/bookmarks', async (req, res) => {
   try {
-    const { category, search, filter, page = 1, limit = 20 } = req.query;
+    const { category, search, sort, filter, page = 1, limit = 20 } = req.query;
     const { author } = req.body;
 
     const offset = (page - 1) * limit;
@@ -321,13 +324,37 @@ app.post('/api/bookmarks', async (req, res) => {
     }
     
     if (search) {
-      query += ' AND (b.title LIKE ? OR b.description LIKE ? OR b.url LIKE ?)';
+      query += ' AND (b.title LIKE ? OR b.description LIKE ? OR b.url LIKE ? OR b.tags LIKE ?)';
       const searchParam = `%${search}%`;
-      params.push(searchParam, searchParam, searchParam);
+      params.push(searchParam, searchParam, searchParam, searchParam);
+    }
+
+    switch(filter) {
+      case "favorites":
+        query += ' AND b.is_favorite = TRUE';
+        break;
+      case "unread":
+        query += ' AND b.is_read = FALSE';
+        break;
+      //default:
+    }
+
+    switch(sort) {
+      case "newest":
+        query += ' ORDER BY b.created_at DESC ';
+        break;
+      case "oldest":
+        query += ' ORDER BY b.created_at ASC ';
+        break;
+      case "title":
+        query += ' ORDER BY b.title DESC ';
+        break;
+      default:
+        query += ' ORDER BY b.created_at DESC ';
     }
     
     // Add ordering
-    query += ' ORDER BY b.created_at DESC LIMIT ? OFFSET ?';
+    query += ' LIMIT ? OFFSET ?';
     params.push(""+(limit), ""+(offset));
     
     const [rows] = await pool.execute(query, params);
@@ -337,7 +364,7 @@ app.post('/api/bookmarks', async (req, res) => {
       SELECT COUNT(*) as total
       FROM bookmarks b
       LEFT JOIN categories c ON b.category_id = c.id
-      WHERE 1=1
+      WHERE 1=1 AND author=?
     `;
     const countParams = params.slice(0, -2); // Remove limit and offset
     
@@ -354,7 +381,7 @@ app.post('/api/bookmarks', async (req, res) => {
     }
     
     if (search) {
-      countQuery += ' AND (b.title LIKE ? OR b.description LIKE ? OR b.url LIKE ?)';
+      countQuery += ' AND (b.title LIKE ? OR b.description LIKE ? OR b.url LIKE ? OR b.tags LIKE ?)';
     }
     
     const [countResult] = await pool.execute(countQuery, countParams);
@@ -422,7 +449,7 @@ app.put('/api/bookmarks/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     
-    const allowedFields = ['title', 'description', 'is_read', 'is_favorite', 'is_archived', 'category_id', 'tags'];
+    const allowedFields = ['title', 'description', 'is_read', 'is_favorite', 'is_archived', 'category_id', 'tags', 'image_url'];
     const setClause = [];
     const params = [];
     
@@ -439,7 +466,8 @@ app.put('/api/bookmarks/:id', async (req, res) => {
     }
     
     params.push(id);
-    
+    // console.log("XX", `UPDATE bookmarks SET ${setClause.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, params);
+
     await pool.execute(
       `UPDATE bookmarks SET ${setClause.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       params
