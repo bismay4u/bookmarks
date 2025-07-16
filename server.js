@@ -153,17 +153,26 @@ async function createTables() {
       image_url TEXT,
       category_id INT,
       tags VARCHAR(500),
+      author varchar(200),
+      shared_with varchar(500),
       is_read BOOLEAN DEFAULT FALSE,
       is_favorite BOOLEAN DEFAULT FALSE,
       is_archived BOOLEAN DEFAULT FALSE,
       is_processed BOOLEAN DEFAULT FALSE,
+      blocked varchar(7) NOT NULL DEFAULT 'false',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
       INDEX idx_category (category_id),
       INDEX idx_read (is_read),
       INDEX idx_favorite (is_favorite),
-      INDEX idx_archived (is_archived)
+      INDEX idx_archived (is_archived),
+      INDEX is_processed (is_processed),
+      KEY title (title(100)),
+      KEY description (description(100)),
+      KEY tags (tags(100)),
+      KEY url (url(100)),
+      KEY author (author(100))
     )
   `;
 
