@@ -132,6 +132,10 @@ body {
     margin-top: 60px;
 }
 
+.bookmark-list {
+    margin-top: 70px;
+}
+
 .bookmark-card {
     background: white;
     border-radius: 12px;
